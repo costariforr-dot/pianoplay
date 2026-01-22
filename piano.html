@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>פסנתר פנורמי 5760x1080</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            /* מאפשר גלילה אופקית אם המסך צר מהתמונה */
+            overflow-x: auto; 
+            overflow-y: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        /* המכולה הראשית ביחס המדויק שלך */
+        .game-wrapper {
+            position: relative;
+            /* מגדיר את הגובה והרוחב לפי היחס שביקשת */
+            min-width: 5760px;
+            height: 1080px;
+            background-image: url('stage.jpg');
+            background-size: 100% 100%; /* מתיחה מדויקת לקצוות */
+            background-repeat: no-repeat;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 80px; /* מרחק מהרצפה */
+        }
+
+        /* התאמה למסכים קטנים יותר - שהתמונה לא תישבר */
+        @media (max-width: 5760px) {
+            .game-wrapper {
+                /* אם את רוצה שהתמונה תתכווץ למסך ולא תצריך גלילה, 
+                   שני את ה-min-width ל-100vw ואת ה-height ל-auto */
+                min-width: 5760px; 
+            }
+        }
+
+        .piano {
+            display: flex;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 40px 100px rgba(0,0,0,1);
+            border: 2px solid #444;
+            /* הגדלת הפסנתר כי הרזולוציה גדולה מאוד */
+            transform: scale(1.5); 
+        }
+
+        .key {
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .white {
+            width: 60px;
+            height: 220px;
+            background: linear-gradient(to bottom, #fff 0%, #eee 100%);
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            z-index: 1;
+        }
+
+        .white.active {
+            background: #ccc;
+            transform: translateY(5px);
+        }
+
+        .black {
+            width: 40px;
+            height: 130px;
+            background: #000;
+            z-index: 2;
+            margin-left: -20px;
+            margin-right: -20px;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .black.active {
+            background: #333;
+            transform: translateY(3px);
+        }
+
+        .label {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: Arial;
+            font-weight: bold;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-wrapper">
+        <div class="piano">
+            <div class="key white" data-note="261.63" data-key="a"><span class="label">A</span></div>
+            <div class="key black" data-note="277.18" data-key="w"></div>
+            <div class="key white" data-note="293.66" data-key="s"><span class="label">S</span></div>
+            <div class="key black" data-note="311.13" data-key="e"></div>
+            <div class="key white" data-note="329.63" data-key="d"><span class="label">D</span></div>
+            <div class="key white" data-note="349.23" data-key="f"><span class="label">F</span></div>
+            <div class="key black" data-note="369.99" data-key="t"></div>
+            <div class="key white" data-note="392.00" data-key="g"><span class="label">G</span></div>
+            <div class="key black" data-note="415.30" data-key="y"></div>
+            <div class="key white" data-note="440.00" data-key="h"><span class="label">H</span></div>
+            <div class="key black" data-note="466.16" data-key="u"></div>
+            <div class="key white" data-note="493.88" data-key="j"><span class="label">J</span></div>
+            <div class="key white" data-note="523.25" data-key="k"><span class="label">K</span></div>
+        </div>
+    </div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playNote(freq) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 1);
+    }
+
+    document.querySelectorAll('.key').forEach(k => {
+        k.addEventListener('mousedown', () => { playNote(k.dataset.note); k.classList.add('active'); });
+        k.addEventListener('mouseup', () => k.classList.remove('active'));
+    });
+
+    const keyMap = {};
+    document.querySelectorAll('.key').forEach(k => keyMap[k.dataset.key] = k);
+    window.addEventListener('keydown', e => {
+        const k = keyMap[e.key.toLowerCase()];
+        if (k && !e.repeat) { playNote(k.dataset.note); k.classList.add('active'); }
+    });
+    window.addEventListener('keyup', e => {
+        const k = keyMap[e.key.toLowerCase()];
+        if (k) k.classList.remove('active');
+    });
+</script>
+
+</body>
+</html>
